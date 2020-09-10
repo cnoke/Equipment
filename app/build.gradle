@@ -1,0 +1,72 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion rootProject.ext.android["compileSdkVersion"]
+    buildToolsVersion rootProject.ext.android["buildToolsVersion"]
+    defaultConfig {
+        applicationId "com.knd.equipment"
+        minSdkVersion rootProject.ext.android["minSdkVersion"]
+        targetSdkVersion rootProject.ext.android["targetSdkVersion"]
+        versionCode rootProject.ext.android["versionCode"]
+        versionName rootProject.ext.android["versionName"]
+        //配置阿里ARouter路由
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+        // 64k
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        //正式版本
+        release {
+            buildConfigField "String", "URL_CONFIG", "\"" + getUrl(1) + "\""
+            //混淆
+            minifyEnabled true
+            //Zipalign优化
+            zipAlignEnabled true
+            // 移除无用的resource文件
+            shrinkResources false
+
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        //测试
+        debug{
+            buildConfigField "String", "URL_CONFIG", "\"" + getUrl(0) + "\""
+            //混淆
+            minifyEnabled false
+            //Zipalign优化
+            zipAlignEnabled true
+            // 移除无用的resource文件
+            shrinkResources false
+
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(':library')
+}
+
+//读取项目中的url.properties配置文件
+static String getUrl(int status) {
+    File propFile = new File('url.properties')//这个文件不可写注释
+    if (propFile.exists()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream(propFile))
+        switch (status) {
+            case 0:
+                return new StringBuilder(props['TEST_URL']).toString()  //测试
+            case 1:
+                return new StringBuilder(props['RELEASE_URL']).toString()//线上
+            default:
+                return new StringBuilder(props['RELEASE_URL']).toString()//线上
+        }
+    }
+    return ""//线上
+}
